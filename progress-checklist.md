@@ -1,0 +1,28 @@
+# Progress Checklist
+
+- [ ] Module 01 — IntelliJ IDEA Setup and First Java Program — Reply: `Module 1 completed`
+- [ ] Module 02 — IntelliJ Navigation Basics — Reply: `Module 2 completed`
+- [ ] Module 03 — Writing Code Faster — Reply: `Module 3 completed`
+- [ ] Module 04 — Project Structure and Java Packages — Reply: `Module 4 completed`
+- [ ] Module 05 — Running Applications and Run Configurations — Reply: `Module 5 completed`
+- [ ] Module 06 — Debugging from Zero — Reply: `Module 6 completed`
+- [ ] Module 07 — Maven in IntelliJ IDEA — Reply: `Module 7 completed`
+- [ ] Module 08 — Gradle in IntelliJ IDEA — Reply: `Module 8 completed`
+- [ ] Module 09 — Git Inside IntelliJ IDEA — Reply: `Module 9 completed`
+- [ ] Module 10 — Code Review Workflow — Reply: `Module 10 completed`
+- [ ] Module 11 — Unit Testing with JUnit — Reply: `Module 11 completed`
+- [ ] Module 12 — Code Quality and Refactoring — Reply: `Module 12 completed`
+- [ ] Module 13 — Spring Boot Project Setup — Reply: `Module 13 completed`
+- [ ] Module 14 — REST API Development — Reply: `Module 14 completed`
+- [ ] Module 15 — IntelliJ HTTP Client Deep Dive — Reply: `Module 15 completed`
+- [ ] Module 16 — Database Integration — Reply: `Module 16 completed`
+- [ ] Module 17 — Services Tool Window and Runtime Management — Reply: `Module 17 completed`
+- [ ] Module 18 — Docker and Local Development — Reply: `Module 18 completed`
+- [ ] Module 19 — Advanced Debugging — Reply: `Module 19 completed`
+- [ ] Module 20 — IntelliJ Productivity Mastery — Reply: `Module 20 completed`
+- [ ] Module 21 — Security-Focused IntelliJ Usage — Reply: `Module 21 completed`
+- [ ] Module 22 — Plugin Ecosystem — Reply: `Module 22 completed`
+- [ ] Module 23 — AI-Assisted Development — Reply: `Module 23 completed`
+- [ ] Module 24 — Real-World Java/Spring Project Structure — Reply: `Module 24 completed`
+- [ ] Module 25 — Working with Large Codebases — Reply: `Module 25 completed`
+- [ ] Module 26 — Capstone Secure Task Manager API — Reply: `Capstone completed`
