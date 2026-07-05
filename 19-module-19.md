@@ -2,596 +2,150 @@
 
 ## Goal
 
-In this module, you will learn how to debug your Spring Boot project in **IntelliJ IDEA Community Edition**.
+In this module, you will learn advanced debugging in **IntelliJ IDEA Community Edition**.
 
-This corrected version gives exact guidance to find:
+This module follows the same debugging goal as the original course module:
 
 ```text
-TaskController
-TaskService
-TaskRepository
-getAllTasks()
-getTaskById()
-createTask()
-updateTask()
-deleteTask()
-taskRepository.save(task)
+HTTP request
+→ Controller
+→ Service
+→ Repository
+→ Database
 ```
 
-This module uses your current simple project structure:
+Community Edition difference:
 
-```java
-public List<Task> getAllTasks() {
-    return taskService.getAllTasks();
-}
+```text
+We will not use Ultimate-only Spring Boot Services/dashboard features.
+We will use normal Run/Debug, Terminal, curl, breakpoints, and the Java debugger.
 ```
 
-It does **not** use:
+Important:
+
+```text
+Do not change your project structure for this module.
+Use the same TaskController, TaskService, TaskRepository, DTOs, mapper, or model classes that already exist in your project.
+```
+
+If your project has:
 
 ```java
 TaskResponse
 TaskMapper
+TaskRequest
 ```
 
-Those are for later improvements.
+use them.
+
+If your project has the simpler:
+
+```java
+Task
+```
+
+use that.
+
+The debugging technique is the same.
 
 ---
 
-## 1. First Understand the Debugging Flow
+## 1. What You Will Learn
 
-For a Spring Boot REST API, the flow is:
-
-```text
-curl/browser request
-→ TaskController
-→ TaskService
-→ TaskRepository
-→ Database
-```
-
-Example:
-
-```bash
-curl http://localhost:8080/tasks
-```
-
-goes through:
+You will learn how to use:
 
 ```text
-TaskController.getAllTasks()
-→ TaskService.getAllTasks()
-→ TaskRepository.findAll()
-→ Database
-```
-
-Example:
-
-```bash
-curl -i -X POST http://localhost:8080/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Debug task","status":"OPEN"}'
-```
-
-goes through:
-
-```text
-TaskController.createTask()
-→ TaskService.createTask()
-→ TaskRepository.save(task)
-→ Database
+Breakpoints
+Step Into
+Step Over
+Step Out
+Resume
+Evaluate Expression
+Watches
+Conditional breakpoints
+Logpoints
+Exception breakpoints
+Call stack / Frames
+Debugging GET requests
+Debugging POST requests
+Debugging validation errors
+Debugging database save flow
 ```
 
 ---
 
-## 2. Confirm Your Project Files
+## 2. Community Edition Debugging Rule
 
-Your project should have these files:
+In IntelliJ IDEA Community Edition, run Spring Boot as a normal Java application.
 
-```text
-springboot-practice
- ├── pom.xml
- ├── src
- │   └── main
- │       ├── java
- │       │   └── com
- │       │       └── example
- │       │           └── springbootpractice
- │       │               ├── SpringbootPracticeApplication.java
- │       │               ├── controller
- │       │               │   └── TaskController.java
- │       │               ├── model
- │       │               │   └── Task.java
- │       │               ├── repository
- │       │               │   └── TaskRepository.java
- │       │               └── service
- │       │                   └── TaskService.java
- │       └── resources
- │           └── application.properties
-```
-
-The important files for this module are:
+You should start debugging from:
 
 ```text
-TaskController.java
-TaskService.java
-TaskRepository.java
-Task.java
 SpringbootPracticeApplication.java
 ```
 
----
+or whatever your main application class is called.
 
-## 3. How to Find `TaskController`
-
-Use **Search Everywhere**.
-
-Press:
-
-```text
-Shift Shift
-```
-
-Type:
-
-```text
-TaskController
-```
-
-Open:
-
-```text
-TaskController.java
-```
-
-If you cannot find it, use **Find in Files**:
-
-| Mac | Windows/Linux |
-|---|---|
-| `Cmd + Shift + F` | `Ctrl + Shift + F` |
-
-Search:
-
-```text
-@RequestMapping("/tasks")
-```
-
-or:
-
-```text
-@GetMapping
-```
-
-or:
-
-```text
-@PostMapping
-```
-
-If nothing appears, your controller may not exist yet.
-
----
-
-## 4. `TaskController` Expected Code
-
-Your `TaskController.java` should look similar to this:
+Example:
 
 ```java
-package com.example.springbootpractice.controller;
+@SpringBootApplication
+public class SpringbootPracticeApplication {
 
-import com.example.springbootpractice.model.Task;
-import com.example.springbootpractice.service.TaskService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-@RequestMapping("/tasks")
-public class TaskController {
-
-    private final TaskService taskService;
-
-    public TaskController(TaskService taskService) {
-        this.taskService = taskService;
-    }
-
-    @GetMapping
-    public List<Task> getAllTasks() {
-        return taskService.getAllTasks();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
-        return taskService.getTaskById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @PostMapping
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
-        return ResponseEntity.ok(taskService.createTask(task));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task task) {
-        return taskService.updateTask(id, task)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
-        if (taskService.deleteTask(id)) {
-            return ResponseEntity.noContent().build();
-        }
-
-        return ResponseEntity.notFound().build();
+    public static void main(String[] args) {
+        SpringApplication.run(SpringbootPracticeApplication.class, args);
     }
 }
 ```
 
----
-
-## 5. How to Find Methods Inside `TaskController`
-
-Open:
+In Community Edition:
 
 ```text
-TaskController.java
+Open main class
+Click the bug icon
+Run app in Debug mode
+Send request using curl/browser/Postman
+Debugger stops at your breakpoint
 ```
-
-Then use **File Structure**.
-
-| Mac | Windows/Linux |
-|---|---|
-| `Cmd + F12` | `Ctrl + F12` |
-
-Search inside the popup for:
-
-```text
-getAllTasks
-getTaskById
-createTask
-updateTask
-deleteTask
-```
-
-This is the fastest way to jump to a method inside a Java file.
 
 ---
 
-## 6. Method Map for `TaskController`
+## 3. Important Debugging Shortcuts
 
-| HTTP Request | Controller Method | Search Term |
+| Action | Mac | Windows/Linux |
 |---|---|---|
-| `GET /tasks` | `getAllTasks()` | `getAllTasks` |
-| `GET /tasks/{id}` | `getTaskById(Long id)` | `getTaskById` |
-| `POST /tasks` | `createTask(Task task)` | `createTask` |
-| `PUT /tasks/{id}` | `updateTask(Long id, Task task)` | `updateTask` |
-| `DELETE /tasks/{id}` | `deleteTask(Long id)` | `deleteTask` |
+| Start Debug | `Ctrl + D` | `Shift + F9` |
+| Toggle Breakpoint | `Cmd + F8` | `Ctrl + F8` |
+| View Breakpoints | `Cmd + Shift + F8` | `Ctrl + Shift + F8` |
+| Step Over | `F8` | `F8` |
+| Step Into | `F7` | `F7` |
+| Step Out | `Shift + F8` | `Shift + F8` |
+| Resume Program | `Cmd + Option + R` | `F9` |
+| Evaluate Expression | `Option + F8` | `Alt + F8` |
+| Run to Cursor | `Option + F9` | `Alt + F9` |
+| Show Execution Point | `Option + F10` | `Alt + F10` |
+| Stop Debugging | `Cmd + F2` | `Ctrl + F2` |
 
----
+If a shortcut does not work, use:
 
-## 7. How to Find `getAllTasks()`
+| Action | Mac | Windows/Linux |
+|---|---|---|
+| Find Action | `Cmd + Shift + A` | `Ctrl + Shift + A` |
 
-Inside `TaskController.java`, press:
+Then search the action name.
 
-```text
-Cmd + F12
-```
-
-or:
-
-```text
-Ctrl + F12
-```
-
-Search:
+Example:
 
 ```text
-getAllTasks
-```
-
-You should find:
-
-```java
-@GetMapping
-public List<Task> getAllTasks() {
-    return taskService.getAllTasks();
-}
-```
-
-Set your breakpoint on this line:
-
-```java
-return taskService.getAllTasks();
-```
-
-This breakpoint is used when you call:
-
-```bash
-curl http://localhost:8080/tasks
+Evaluate Expression
+View Breakpoints
+Run to Cursor
+Show Execution Point
 ```
 
 ---
 
-## 8. How to Find `createTask()`
-
-Inside `TaskController.java`, press:
-
-```text
-Cmd + F12
-```
-
-or:
-
-```text
-Ctrl + F12
-```
-
-Search:
-
-```text
-createTask
-```
-
-You should find:
-
-```java
-@PostMapping
-public ResponseEntity<Task> createTask(@RequestBody Task task) {
-    return ResponseEntity.ok(taskService.createTask(task));
-}
-```
-
-Set your breakpoint on this line:
-
-```java
-return ResponseEntity.ok(taskService.createTask(task));
-```
-
-This breakpoint is used when you call:
-
-```bash
-curl -i -X POST http://localhost:8080/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Advanced debugging task","status":"OPEN"}'
-```
-
----
-
-## 9. How to Find `TaskService`
-
-Use **Search Everywhere**.
-
-Press:
-
-```text
-Shift Shift
-```
-
-Type:
-
-```text
-TaskService
-```
-
-Open:
-
-```text
-TaskService.java
-```
-
-If you cannot find it, use Find in Files:
-
-```text
-taskRepository
-```
-
-or:
-
-```text
-public List<Task> getAllTasks
-```
-
-or:
-
-```text
-public Task createTask
-```
-
----
-
-## 10. `TaskService` Expected Code
-
-If you completed the database module, `TaskService.java` should look similar to this:
-
-```java
-package com.example.springbootpractice.service;
-
-import com.example.springbootpractice.model.Task;
-import com.example.springbootpractice.repository.TaskRepository;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-
-@Service
-public class TaskService {
-
-    private final TaskRepository taskRepository;
-
-    public TaskService(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
-    }
-
-    public List<Task> getAllTasks() {
-        return taskRepository.findAll();
-    }
-
-    public Optional<Task> getTaskById(Long id) {
-        return taskRepository.findById(id);
-    }
-
-    public Task createTask(Task task) {
-        return taskRepository.save(task);
-    }
-
-    public Optional<Task> updateTask(Long id, Task updatedTask) {
-        return taskRepository.findById(id)
-                .map(existingTask -> {
-                    existingTask.setTitle(updatedTask.getTitle());
-                    existingTask.setStatus(updatedTask.getStatus());
-                    return taskRepository.save(existingTask);
-                });
-    }
-
-    public boolean deleteTask(Long id) {
-        if (!taskRepository.existsById(id)) {
-            return false;
-        }
-
-        taskRepository.deleteById(id);
-        return true;
-    }
-}
-```
-
----
-
-## 11. If Your `TaskService` Is Still In-Memory
-
-Your `createTask()` may look like this:
-
-```java
-public Task createTask(Task task) {
-    task.setId(nextId++);
-    tasks.add(task);
-    return task;
-}
-```
-
-That means you are still using the older in-memory version.
-
-For debugging practice, that is okay.
-
-Use breakpoint on:
-
-```java
-tasks.add(task);
-```
-
-But if you are doing database debugging, your method should be:
-
-```java
-public Task createTask(Task task) {
-    return taskRepository.save(task);
-}
-```
-
-Use breakpoint on:
-
-```java
-return taskRepository.save(task);
-```
-
----
-
-## 12. How to Find `createTask()` in `TaskService`
-
-Open:
-
-```text
-TaskService.java
-```
-
-Press:
-
-```text
-Cmd + F12
-```
-
-or:
-
-```text
-Ctrl + F12
-```
-
-Search:
-
-```text
-createTask
-```
-
-You should find one of these versions.
-
-Database version:
-
-```java
-public Task createTask(Task task) {
-    return taskRepository.save(task);
-}
-```
-
-In-memory version:
-
-```java
-public Task createTask(Task task) {
-    task.setId(nextId++);
-    tasks.add(task);
-    return task;
-}
-```
-
----
-
-## 13. How to Find `TaskRepository`
-
-Press:
-
-```text
-Shift Shift
-```
-
-Type:
-
-```text
-TaskRepository
-```
-
-Open:
-
-```text
-TaskRepository.java
-```
-
-Expected code:
-
-```java
-package com.example.springbootpractice.repository;
-
-import com.example.springbootpractice.model.Task;
-import org.springframework.data.jpa.repository.JpaRepository;
-
-public interface TaskRepository extends JpaRepository<Task, Long> {
-}
-```
-
-This file does not show `save()`, `findAll()`, or `findById()` directly because they come from:
-
-```java
-JpaRepository<Task, Long>
-```
-
-That is why this line in `TaskService` works:
-
-```java
-return taskRepository.save(task);
-```
-
----
-
-## 14. How to Start Debug Mode
+## 4. Start the Application in Debug Mode
 
 Open:
 
@@ -607,50 +161,108 @@ Or use:
 |---|---|
 | `Ctrl + D` | `Shift + F9` |
 
-Expected log:
+Expected console log:
 
 ```text
 Tomcat started on port 8080
 Started SpringbootPracticeApplication
 ```
 
-Now your app is running in Debug mode.
+Now the app is running in Debug mode.
 
 ---
 
-## 15. Debugging Shortcuts
+## 5. How to Find the Controller Method
 
-| Action | Mac | Windows/Linux |
-|---|---|---|
-| Start Debug | `Ctrl + D` | `Shift + F9` |
-| Toggle Breakpoint | `Cmd + F8` | `Ctrl + F8` |
-| Step Over | `F8` | `F8` |
-| Step Into | `F7` | `F7` |
-| Step Out | `Shift + F8` | `Shift + F8` |
-| Resume Program | `Cmd + Option + R` | `F9` |
-| Evaluate Expression | `Option + F8` | `Alt + F8` |
-| View Breakpoints | `Cmd + Shift + F8` | `Ctrl + Shift + F8` |
-| Stop Debugging | `Cmd + F2` | `Ctrl + F2` |
+Open your controller file.
 
-If a shortcut does not work:
-
-| Mac | Windows/Linux |
-|---|---|
-| `Cmd + Shift + A` | `Ctrl + Shift + A` |
-
-Then search the action name.
-
----
-
-## 16. Debug `GET /tasks`
-
-Open:
+Usually it is:
 
 ```text
 TaskController.java
 ```
 
-Find:
+Use:
+
+```text
+Shift Shift
+```
+
+Search:
+
+```text
+TaskController
+```
+
+Open the file.
+
+Now use **File Structure** to find methods.
+
+| Mac | Windows/Linux |
+|---|---|
+| `Cmd + F12` | `Ctrl + F12` |
+
+Look for methods like:
+
+```text
+getAllTasks
+getTaskById
+createTask
+updateTask
+deleteTask
+```
+
+If you cannot find the method, use **Find in Files**:
+
+| Mac | Windows/Linux |
+|---|---|
+| `Cmd + Shift + F` | `Ctrl + Shift + F` |
+
+Search for:
+
+```text
+@GetMapping
+```
+
+```text
+@PostMapping
+```
+
+```text
+/tasks
+```
+
+```text
+createTask
+```
+
+```text
+getAllTasks
+```
+
+---
+
+## 6. Debug GET `/tasks`
+
+Find the method that handles:
+
+```text
+GET /tasks
+```
+
+It may look like this if your project uses DTOs:
+
+```java
+@GetMapping
+public List<TaskResponse> getAllTasks() {
+    return taskService.getAllTasks()
+            .stream()
+            .map(taskMapper::toResponse)
+            .toList();
+}
+```
+
+Or it may look like this if your project uses the entity directly:
 
 ```java
 @GetMapping
@@ -659,32 +271,99 @@ public List<Task> getAllTasks() {
 }
 ```
 
-Set breakpoint on:
+Both are fine.
+
+Set a breakpoint inside this method.
+
+Good breakpoint location:
+
+```java
+return taskService.getAllTasks()
+```
+
+or:
 
 ```java
 return taskService.getAllTasks();
 ```
 
-Run this in Terminal:
+Now open IntelliJ Terminal:
+
+| Mac | Windows/Linux |
+|---|---|
+| `Option + F12` | `Alt + F12` |
+
+Run:
 
 ```bash
 curl http://localhost:8080/tasks
 ```
 
-Expected:
+Expected behavior:
 
 ```text
-Debugger stops at TaskController.getAllTasks()
-curl waits
+Debugger stops at the breakpoint.
+curl waits until you resume the program.
 ```
 
-Now press:
+---
+
+## 7. Inspect Variables
+
+When the debugger stops, look at the Debug window.
+
+Important areas:
+
+```text
+Frames
+Variables
+Watches
+Console
+Threads
+```
+
+In the controller, inspect:
+
+```text
+this
+taskService
+taskMapper, if your project has it
+request variables, if available
+```
+
+If the method is simple, there may not be many variables. That is normal.
+
+---
+
+## 8. Step Into the Service Layer
+
+When stopped at:
+
+```java
+taskService.getAllTasks()
+```
+
+press:
 
 ```text
 F7
 ```
 
-This steps into:
+This is **Step Into**.
+
+You should move from:
+
+```text
+TaskController
+```
+
+to:
+
+```text
+TaskService
+```
+
+You may see a method like:
 
 ```java
 public List<Task> getAllTasks() {
@@ -692,185 +371,83 @@ public List<Task> getAllTasks() {
 }
 ```
 
-Now you are inside `TaskService`.
+or your equivalent service method.
 
-At:
+This confirms the request flow:
+
+```text
+Controller → Service
+```
+
+---
+
+## 9. Step Over Repository Calls
+
+Inside the service, you may see:
 
 ```java
 return taskRepository.findAll();
 ```
 
-press:
+Use:
 
 ```text
 F8
 ```
 
-This steps over the repository call.
+This is **Step Over**.
 
-Then press Resume:
+Reason:
+
+```text
+Repository methods are Spring Data JPA framework calls.
+Usually you do not need to step into framework internals.
+```
+
+Rule:
+
+```text
+Step Into your own code.
+Step Over framework/library code.
+```
+
+---
+
+## 10. Resume the Program
+
+After inspecting values, continue the request.
+
+Use:
 
 | Mac | Windows/Linux |
 |---|---|
 | `Cmd + Option + R` | `F9` |
 
-Now curl should return JSON.
+The curl request should now complete and return JSON.
 
 ---
 
-## 17. Debug `POST /tasks`
+## 11. Debug GET `/tasks/{id}`
 
-Open:
+Find the controller method for:
 
 ```text
-TaskController.java
+GET /tasks/{id}
 ```
 
-Find:
+It may look similar to:
 
 ```java
-@PostMapping
-public ResponseEntity<Task> createTask(@RequestBody Task task) {
-    return ResponseEntity.ok(taskService.createTask(task));
+@GetMapping("/{id}")
+public ResponseEntity<TaskResponse> getTaskById(@PathVariable Long id) {
+    return taskService.getTaskById(id)
+            .map(taskMapper::toResponse)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
 }
 ```
 
-Set breakpoint on:
-
-```java
-return ResponseEntity.ok(taskService.createTask(task));
-```
-
-Run:
-
-```bash
-curl -i -X POST http://localhost:8080/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"title":"Advanced debugging task","status":"OPEN"}'
-```
-
-Debugger stops in:
-
-```text
-TaskController.createTask()
-```
-
-Inspect:
-
-```text
-task
-task.id
-task.title
-task.status
-```
-
-If you cannot see private fields clearly, use Evaluate Expression:
-
-```java
-task.getTitle()
-```
-
-```java
-task.getStatus()
-```
-
-Expected:
-
-```text
-Advanced debugging task
-OPEN
-```
-
----
-
-## 18. Step from Controller to Service
-
-When stopped at:
-
-```java
-return ResponseEntity.ok(taskService.createTask(task));
-```
-
-Put your cursor on:
-
-```text
-taskService.createTask(task)
-```
-
-Press:
-
-```text
-F7
-```
-
-You should enter:
-
-```java
-public Task createTask(Task task) {
-    return taskRepository.save(task);
-}
-```
-
-Now you are inside:
-
-```text
-TaskService.createTask()
-```
-
-Set a breakpoint on:
-
-```java
-return taskRepository.save(task);
-```
-
-Then press:
-
-```text
-F8
-```
-
-This saves the task.
-
----
-
-## 19. Easier Debug Version of `createTask()`
-
-For learning, this version is easier to debug:
-
-```java
-public Task createTask(Task task) {
-    Task savedTask = taskRepository.save(task);
-    return savedTask;
-}
-```
-
-Now set breakpoint on:
-
-```java
-return savedTask;
-```
-
-Inspect:
-
-```text
-savedTask.id
-savedTask.title
-savedTask.status
-```
-
-This helps you clearly see the saved object after database save.
-
----
-
-## 20. Debug `GET /tasks/{id}`
-
-Open:
-
-```text
-TaskController.java
-```
-
-Find:
+or:
 
 ```java
 @GetMapping("/{id}")
@@ -881,10 +458,10 @@ public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
 }
 ```
 
-Set breakpoint on:
+Set a breakpoint on the line that calls:
 
 ```java
-return taskService.getTaskById(id)
+taskService.getTaskById(id)
 ```
 
 Run:
@@ -897,29 +474,11 @@ Inspect:
 
 ```text
 id
+taskService
+Optional result after service call
 ```
 
-Press `F7`.
-
-You should enter:
-
-```java
-public Optional<Task> getTaskById(Long id) {
-    return taskRepository.findById(id);
-}
-```
-
-Use `F8` on:
-
-```java
-return taskRepository.findById(id);
-```
-
----
-
-## 21. Debug 404 Flow
-
-Run:
+Then test a missing record:
 
 ```bash
 curl -i http://localhost:8080/tasks/999
@@ -931,34 +490,297 @@ Expected:
 HTTP/1.1 404
 ```
 
-Breakpoints:
+Debugging this teaches how missing database records become `404 Not Found`.
+
+---
+
+## 12. Debug POST `/tasks`
+
+Find the controller method for:
 
 ```text
-TaskController.getTaskById()
-TaskService.getTaskById()
+POST /tasks
+```
+
+It may look like this if your project uses DTOs:
+
+```java
+@PostMapping
+public ResponseEntity<TaskResponse> createTask(@Valid @RequestBody TaskRequest request) {
+    Task task = taskMapper.toEntity(request);
+    Task createdTask = taskService.createTask(task);
+    return ResponseEntity.ok(taskMapper.toResponse(createdTask));
+}
+```
+
+Or it may look like this if your project uses the entity directly:
+
+```java
+@PostMapping
+public ResponseEntity<Task> createTask(@RequestBody Task task) {
+    return ResponseEntity.ok(taskService.createTask(task));
+}
+```
+
+Use the version that exists in your project.
+
+Set breakpoints on important lines.
+
+For DTO version:
+
+```java
+Task task = taskMapper.toEntity(request);
+Task createdTask = taskService.createTask(task);
+return ResponseEntity.ok(taskMapper.toResponse(createdTask));
+```
+
+For simple entity version:
+
+```java
+return ResponseEntity.ok(taskService.createTask(task));
+```
+
+Now send a POST request:
+
+```bash
+curl -i -X POST http://localhost:8080/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Advanced debugging task","status":"OPEN"}'
+```
+
+Expected:
+
+```text
+Debugger stops inside the create task controller method.
+```
+
+---
+
+## 13. Inspect POST Request Body
+
+If your method uses `TaskRequest`, inspect:
+
+```text
+request
+request.title
+request.status
+```
+
+or use Evaluate Expression:
+
+```java
+request.getTitle()
+```
+
+```java
+request.getStatus()
+```
+
+If your method uses `Task`, inspect:
+
+```text
+task
+task.title
+task.status
+```
+
+or use:
+
+```java
+task.getTitle()
+```
+
+```java
+task.getStatus()
+```
+
+Expected values:
+
+```text
+Advanced debugging task
+OPEN
+```
+
+---
+
+## 14. Step Through Mapper If Your Project Has One
+
+If your project has:
+
+```java
+taskMapper.toEntity(request)
+```
+
+press:
+
+```text
+F7
+```
+
+to step into mapper code.
+
+You may see something like:
+
+```java
+public Task toEntity(TaskRequest request) {
+    Task task = new Task();
+    task.setTitle(request.getTitle());
+    task.setStatus(request.getStatus());
+    return task;
+}
 ```
 
 Inspect:
 
 ```text
-id = 999
-Optional is empty
-ResponseEntity.notFound()
+request.title
+request.status
+task.title
+task.status
 ```
 
-This teaches you how a missing record becomes HTTP 404.
+Then press:
+
+```text
+Shift + F8
+```
+
+to Step Out back to the controller.
+
+If your project does not have a mapper, skip this section.
 
 ---
 
-## 22. Debug `PUT /tasks/{id}`
+## 15. Step Into `TaskService.createTask()`
 
-Open:
+From the controller, step into:
 
-```text
-TaskController.java
+```java
+taskService.createTask(...)
 ```
 
-Find:
+Use:
+
+```text
+F7
+```
+
+You should enter the service method that creates a task.
+
+It may look similar to:
+
+```java
+public Task createTask(Task task) {
+    return taskRepository.save(task);
+}
+```
+
+or your equivalent code.
+
+Set a breakpoint inside this service method.
+
+Good breakpoint location:
+
+```java
+return taskRepository.save(task);
+```
+
+If your service uses a local variable, it may look like:
+
+```java
+Task savedTask = taskRepository.save(task);
+return savedTask;
+```
+
+In that case, set breakpoint on:
+
+```java
+return savedTask;
+```
+
+---
+
+## 16. Debug Database Save
+
+When you reach:
+
+```java
+taskRepository.save(task)
+```
+
+use:
+
+```text
+F8
+```
+
+Do not step deep into Spring Data JPA unless you specifically want framework internals.
+
+After the save, inspect:
+
+```text
+saved task id
+saved task title
+saved task status
+```
+
+If your entity uses generated IDs, the ID may be `null` before save and populated after save.
+
+---
+
+## 17. Check Database After POST
+
+If using H2 Console:
+
+```text
+http://localhost:8080/h2-console
+```
+
+Run:
+
+```sql
+SELECT * FROM TASK;
+```
+
+If using PostgreSQL Docker:
+
+```bash
+docker exec -it task-postgres psql -U taskuser -d taskdb
+```
+
+Then run:
+
+```sql
+SELECT * FROM task;
+```
+
+You should see the task created during debugging.
+
+---
+
+## 18. Debug PUT `/tasks/{id}`
+
+Find the controller method for:
+
+```text
+PUT /tasks/{id}
+```
+
+It may look similar to:
+
+```java
+@PutMapping("/{id}")
+public ResponseEntity<TaskResponse> updateTask(@PathVariable Long id,
+                                               @Valid @RequestBody TaskRequest request) {
+    Task task = taskMapper.toEntity(request);
+    return taskService.updateTask(id, task)
+            .map(taskMapper::toResponse)
+            .map(ResponseEntity::ok)
+            .orElse(ResponseEntity.notFound().build());
+}
+```
+
+or:
 
 ```java
 @PutMapping("/{id}")
@@ -969,10 +791,10 @@ public ResponseEntity<Task> updateTask(@PathVariable Long id, @RequestBody Task 
 }
 ```
 
-Set breakpoint on:
+Set breakpoint on the service call:
 
 ```java
-return taskService.updateTask(id, task)
+taskService.updateTask(...)
 ```
 
 Run:
@@ -987,23 +809,25 @@ Inspect:
 
 ```text
 id
-task.title
-task.status
+request or task
+title
+status
+existing task
+updated task
+saved task
 ```
-
-Step into `TaskService.updateTask()`.
 
 ---
 
-## 23. Debug `DELETE /tasks/{id}`
+## 19. Debug DELETE `/tasks/{id}`
 
-Open:
+Find the controller method for:
 
 ```text
-TaskController.java
+DELETE /tasks/{id}
 ```
 
-Find:
+It may look similar to:
 
 ```java
 @DeleteMapping("/{id}")
@@ -1019,7 +843,7 @@ public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
 Set breakpoint on:
 
 ```java
-if (taskService.deleteTask(id)) {
+taskService.deleteTask(id)
 ```
 
 Run:
@@ -1028,37 +852,39 @@ Run:
 curl -i -X DELETE http://localhost:8080/tasks/1
 ```
 
-Inspect:
+Step into the service method and inspect:
 
 ```text
 id
+existsById result
+deleteById call
+return value
 ```
 
-Step into:
+Then call the same request again:
 
-```java
-public boolean deleteTask(Long id) {
-    if (!taskRepository.existsById(id)) {
-        return false;
-    }
+```bash
+curl -i -X DELETE http://localhost:8080/tasks/1
+```
 
-    taskRepository.deleteById(id);
-    return true;
-}
+Expected second result may be:
+
+```text
+HTTP/1.1 404
 ```
 
 ---
 
-## 24. Conditional Breakpoint
+## 20. Conditional Breakpoints
 
 A conditional breakpoint stops only when a condition is true.
 
 Example:
 
-In `TaskController.getTaskById()`, set breakpoint on:
+In your `getTaskById` controller method, set a breakpoint on:
 
 ```java
-return taskService.getTaskById(id)
+taskService.getTaskById(id)
 ```
 
 Right-click the breakpoint.
@@ -1085,11 +911,7 @@ curl http://localhost:8080/tasks/999
 
 Debugger should stop.
 
----
-
-## 25. Useful Conditional Breakpoints
-
-Use these:
+Useful conditional breakpoint examples:
 
 ```java
 id == 1
@@ -1108,29 +930,36 @@ task.getTitle().isBlank()
 ```
 
 ```java
-task.getStatus() == null
-```
-
-```java
-task.getStatus().equals("COMPLETED")
-```
-
-Safer version:
-
-```java
 "COMPLETED".equals(task.getStatus())
 ```
 
 ---
 
-## 26. Logpoints
+## 21. Logpoints
 
 A logpoint prints a message without stopping the app.
 
-Set breakpoint in:
+This is useful when:
+
+```text
+You want to observe execution
+You do not want to pause the request
+A method is called many times
+You want temporary debug logging without changing code
+```
+
+Set a breakpoint inside your service create method, for example:
 
 ```text
 TaskService.createTask()
+```
+
+Meaning:
+
+```text
+Open TaskService.java
+Find the createTask method
+Set breakpoint inside that method
 ```
 
 Right-click the breakpoint.
@@ -1142,13 +971,13 @@ Uncheck Suspend
 Enable Log message to console
 ```
 
-Message:
+Example log message:
 
 ```text
 createTask method called
 ```
 
-Run:
+Now send:
 
 ```bash
 curl -i -X POST http://localhost:8080/tasks \
@@ -1159,13 +988,15 @@ curl -i -X POST http://localhost:8080/tasks \
 Expected:
 
 ```text
-App does not pause
-Message appears in debug console
+The app does not stop.
+A message appears in the debug console.
 ```
 
 ---
 
-## 27. Exception Breakpoint
+## 22. Exception Breakpoints
+
+Exception breakpoints stop when a specific exception occurs.
 
 Open View Breakpoints:
 
@@ -1191,19 +1022,21 @@ Add:
 NullPointerException
 ```
 
-Now IntelliJ will stop when a `NullPointerException` happens.
+Now IntelliJ can stop when a `NullPointerException` is thrown.
 
 ---
 
-## 28. Practice Exception Debugging
+## 23. Practice Exception Debugging
+
+Create a temporary controller only for practice if the original module includes this exercise.
 
 Create:
 
 ```text
-controller/DebugErrorController.java
+DebugErrorController.java
 ```
 
-Paste:
+Example:
 
 ```java
 package com.example.springbootpractice.controller;
@@ -1230,25 +1063,73 @@ Call:
 curl http://localhost:8080/debug/error
 ```
 
-Debugger should stop on:
+Expected:
 
-```java
-return value.toUpperCase();
+```text
+Debugger stops on the NullPointerException.
 ```
 
-After practice, delete this file or keep it only on a learning branch.
+After practice:
+
+```text
+Delete DebugErrorController
+or keep it only in a learning branch
+```
+
+Do not leave debug-only code in production-style commits.
 
 ---
 
-## 29. Evaluate Expression
+## 24. Read Stack Trace Correctly
 
-When stopped at a breakpoint, use:
+When an exception happens, look for your package first.
+
+Example:
+
+```text
+com.example.springbootpractice.controller.DebugErrorController.error(DebugErrorController.java:10)
+```
+
+Rule:
+
+```text
+Find the first stack trace line that points to your code.
+Start debugging there.
+```
+
+Do not start with framework lines like:
+
+```text
+org.springframework...
+org.apache.catalina...
+jakarta.servlet...
+```
+
+Those are usually not where your bug begins.
+
+---
+
+## 25. Evaluate Expression
+
+When debugger is stopped, use:
 
 | Mac | Windows/Linux |
 |---|---|
 | `Option + F8` | `Alt + F8` |
 
-Try:
+Try expressions based on your project structure.
+
+If using DTO request:
+
+```java
+request.getTitle()
+```
+
+```java
+request.getStatus()
+```
+
+If using entity:
 
 ```java
 task.getTitle()
@@ -1257,6 +1138,8 @@ task.getTitle()
 ```java
 task.getStatus()
 ```
+
+Repository examples:
 
 ```java
 taskRepository.count()
@@ -1266,19 +1149,33 @@ taskRepository.count()
 taskRepository.findAll()
 ```
 
-Avoid dangerous expressions like:
+Avoid expressions that modify data unless intentional:
 
 ```java
 taskRepository.deleteAll()
 ```
 
-because that changes data.
+```java
+taskRepository.save(...)
+```
 
 ---
 
-## 30. Watches
+## 26. Watches
 
-In the Debug window, add Watches:
+Watches keep important values visible while stepping.
+
+Add watches such as:
+
+```java
+request.getTitle()
+```
+
+```java
+request.getStatus()
+```
+
+or:
 
 ```java
 task.getTitle()
@@ -1288,47 +1185,140 @@ task.getTitle()
 task.getStatus()
 ```
 
+and:
+
 ```java
 taskRepository.count()
 ```
 
-Watches keep important values visible while stepping through code.
+Use the expressions that match your current project code.
 
 ---
 
-## 31. Check Database After Debugging
+## 27. Frames and Call Stack
 
-If using H2:
+The Frames panel shows how execution reached the current line.
+
+Example flow:
 
 ```text
-http://localhost:8080/h2-console
+TaskService.createTask
+TaskController.createTask
+Spring MVC framework methods
+Tomcat servlet methods
+Thread.run
 ```
 
-Run:
+Important:
 
-```sql
-SELECT * FROM TASK;
+```text
+Top frame = current method
+Lower frames = methods that called it
 ```
 
-If using PostgreSQL Docker:
-
-```bash
-docker exec -it task-postgres psql -U taskuser -d taskdb
-```
-
-Then:
-
-```sql
-SELECT * FROM task;
-```
-
-Confirm the task you created is saved.
+Use this to understand the request path.
 
 ---
 
-## 32. What to Do When You Cannot Find a Method
+## 28. Threads View
 
-Use this exact fallback order:
+Spring Boot handles web requests on server threads.
+
+You may see names like:
+
+```text
+nio-8080-exec-1
+nio-8080-exec-2
+main
+```
+
+For this module:
+
+```text
+Focus on the thread stopped at your breakpoint.
+```
+
+You do not need advanced thread debugging yet.
+
+---
+
+## 29. Run to Cursor
+
+If you want to skip several lines and stop at a specific line:
+
+1. Put your cursor on the target line.
+2. Use Run to Cursor.
+
+| Mac | Windows/Linux |
+|---|---|
+| `Option + F9` | `Alt + F9` |
+
+This is faster than pressing `F8` many times.
+
+---
+
+## 30. Show Execution Point
+
+Sometimes you click around and lose the current paused line.
+
+Use:
+
+| Mac | Windows/Linux |
+|---|---|
+| `Option + F10` | `Alt + F10` |
+
+This jumps back to the current execution line.
+
+---
+
+## 31. Debug Validation Errors
+
+If your original project has validation like:
+
+```java
+@Valid @RequestBody TaskRequest request
+```
+
+and a global exception handler, test invalid input.
+
+Example:
+
+```bash
+curl -i -X POST http://localhost:8080/tasks \
+  -H "Content-Type: application/json" \
+  -d '{"title":"","status":"OPEN"}'
+```
+
+Expected:
+
+```text
+HTTP/1.1 400
+```
+
+Set breakpoints in:
+
+```text
+Controller create method
+Service validation method if available
+GlobalExceptionHandler
+```
+
+Inspect:
+
+```text
+request
+field errors
+exception message
+response body
+```
+
+If your project does not yet have validation, skip this section.
+
+---
+
+## 32. What To Do When You Cannot Find a Method
+
+Use this order.
 
 ### Step 1 — Search Everywhere
 
@@ -1342,43 +1332,36 @@ Search:
 TaskController
 ```
 
-or:
-
 ```text
 TaskService
 ```
 
+```text
+TaskRepository
+```
+
 ### Step 2 — File Structure
 
-Inside the file:
+Inside a Java file:
+
+| Mac | Windows/Linux |
+|---|---|
+| `Cmd + F12` | `Ctrl + F12` |
+
+Search method name:
 
 ```text
-Cmd + F12
-```
-
-or:
-
-```text
-Ctrl + F12
-```
-
-Search:
-
-```text
+getAllTasks
 createTask
+updateTask
+deleteTask
 ```
 
 ### Step 3 — Find in Files
 
-```text
-Cmd + Shift + F
-```
-
-or:
-
-```text
-Ctrl + Shift + F
-```
+| Mac | Windows/Linux |
+|---|---|
+| `Cmd + Shift + F` | `Ctrl + Shift + F` |
 
 Search:
 
@@ -1386,21 +1369,9 @@ Search:
 createTask
 ```
 
-or:
-
 ```text
 taskRepository.save
 ```
-
-or:
-
-```text
-@PostMapping
-```
-
-### Step 4 — Search by endpoint annotation
-
-Search:
 
 ```text
 @GetMapping
@@ -1411,31 +1382,22 @@ Search:
 ```
 
 ```text
-@PutMapping
-```
-
-```text
-@DeleteMapping
-```
-
-```text
 @RequestMapping("/tasks")
 ```
 
 ---
 
-## 33. Method Search Table
+## 33. Community Edition Replacement Table
 
-| What You Need | Search This | File |
-|---|---|---|
-| All tasks endpoint | `getAllTasks` | `TaskController.java` |
-| Create task endpoint | `createTask` | `TaskController.java` |
-| Save logic | `taskRepository.save` | `TaskService.java` |
-| Find all DB logic | `taskRepository.findAll` | `TaskService.java` |
-| Find by ID logic | `taskRepository.findById` | `TaskService.java` |
-| Delete logic | `deleteTask` | `TaskService.java` |
-| REST mappings | `@GetMapping`, `@PostMapping` | `TaskController.java` |
-| Base route | `@RequestMapping("/tasks")` | `TaskController.java` |
+| Original/Ultimate Style | Community Edition Method |
+|---|---|
+| Spring Boot Services window | Run/Debug main class |
+| Spring Boot dashboard | Run tool window / Debug tool window |
+| Built-in HTTP Client workflow | Terminal `curl` or Postman |
+| Database tool window | H2 Console, `psql`, or DBeaver |
+| Docker Services window | Docker CLI in Terminal |
+| Endpoint navigation tools | Find in Files: `@GetMapping`, `@PostMapping`, `/tasks` |
+| Runtime monitoring | Console logs and Terminal commands |
 
 ---
 
@@ -1464,14 +1426,35 @@ Debugger stopped at breakpoint
 
 Press Resume.
 
+### Cannot find `TaskService.createTask()`
+
+Remember:
+
+```text
+TaskService.createTask() is not a class.
+It means createTask method inside TaskService.java.
+```
+
+Open:
+
+```text
+TaskService.java
+```
+
+Then search:
+
+```text
+createTask
+```
+
 ### Cannot find `taskRepository.save(task)`
 
 Possible reasons:
 
 ```text
-You are still using in-memory TaskService
+Your service uses a different method name
+Your project is still using an in-memory list
 Database module is not completed
-TaskService has different method name
 ```
 
 Search:
@@ -1486,24 +1469,15 @@ or:
 tasks.add
 ```
 
-### Cannot find `getAllTasks()`
+### Step Into goes too deep into Spring code
 
-Search:
-
-```text
-@GetMapping
-```
-
-or:
+Use:
 
 ```text
-findAll
-```
-
-or:
-
-```text
-/tasks
+Step Out
+Resume
+Set breakpoint in your next class
+Use Step Over next time
 ```
 
 ---
@@ -1515,19 +1489,19 @@ Complete this full flow:
 ```text
 1. Start app in Debug mode.
 2. Open TaskController.
-3. Find getAllTasks using Cmd/Ctrl + F12.
-4. Set breakpoint on return taskService.getAllTasks().
+3. Find the GET /tasks method.
+4. Set breakpoint on the service call.
 5. Run curl http://localhost:8080/tasks.
 6. Confirm debugger stops.
-7. Press F7 to step into TaskService.
-8. Press F8 over taskRepository.findAll().
+7. Press F7 to step into service.
+8. Press F8 over repository call.
 9. Resume.
-10. Find createTask in TaskController.
-11. Set breakpoint on taskService.createTask(task).
+10. Find the POST /tasks method.
+11. Set breakpoint before the service create call.
 12. Run POST curl request.
-13. Inspect task.title and task.status.
-14. Step into TaskService.createTask.
-15. Step over taskRepository.save(task).
+13. Inspect request/task title and status.
+14. Step into service create method.
+15. Step over repository save.
 16. Inspect saved task.
 17. Check database.
 18. Add conditional breakpoint for id == 999.
@@ -1536,6 +1510,7 @@ Complete this full flow:
 21. Add a NullPointerException exception breakpoint.
 22. Practice Evaluate Expression.
 23. Add Watches.
+24. Remove debug-only code.
 ```
 
 ---
@@ -1546,38 +1521,34 @@ Complete these tasks:
 
 ```text
 1. Open springboot-practice.
-2. Press Shift Shift and open TaskController.
-3. Use Cmd/Ctrl + F12 to find getAllTasks.
-4. Set breakpoint on return taskService.getAllTasks().
-5. Start SpringbootPracticeApplication in Debug mode.
+2. Start SpringbootPracticeApplication in Debug mode.
+3. Open TaskController.
+4. Find the GET /tasks method.
+5. Set breakpoint on the service call inside GET /tasks.
 6. Run curl http://localhost:8080/tasks.
 7. Confirm debugger stops.
-8. Step into TaskService.getAllTasks.
-9. Step over taskRepository.findAll.
+8. Step into TaskService.
+9. Step over repository call.
 10. Resume program.
-11. Use Cmd/Ctrl + F12 to find createTask in TaskController.
-12. Set breakpoint on taskService.createTask(task).
+11. Find the POST /tasks method.
+12. Set breakpoint before or on the service create call.
 13. Run POST /tasks using curl.
-14. Inspect task title and status.
-15. Step into TaskService.createTask.
-16. Find taskRepository.save(task).
-17. Step over taskRepository.save(task).
-18. Inspect saved task.
-19. Use Shift Shift to open TaskRepository.
-20. Confirm it extends JpaRepository<Task, Long>.
-21. Debug GET /tasks/1.
-22. Debug GET /tasks/999.
-23. Add conditional breakpoint id == 999.
-24. Add logpoint in createTask.
-25. Add NullPointerException exception breakpoint.
-26. Create DebugErrorController.
-27. Call /debug/error.
-28. Confirm debugger stops.
-29. Use Evaluate Expression.
-30. Add Watches.
-31. Review Git diff.
-32. Remove DebugErrorController or commit it only as practice code.
-33. Commit with message:
+14. Inspect request/task title and status.
+15. Step into TaskService create method.
+16. Step over repository save call.
+17. Inspect saved result if available.
+18. Debug GET /tasks/1.
+19. Debug GET /tasks/999.
+20. Add conditional breakpoint id == 999.
+21. Add logpoint in create method.
+22. Add NullPointerException exception breakpoint.
+23. Practice exception debugging if included in your original module.
+24. Use Evaluate Expression.
+25. Add Watches.
+26. Review console logs.
+27. Review Git diff.
+28. Remove debug-only code.
+29. Commit with message:
     Practice advanced debugging workflow in IntelliJ Community Edition
 ```
 
