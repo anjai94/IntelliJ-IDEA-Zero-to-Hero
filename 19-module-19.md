@@ -1030,7 +1030,7 @@ Enable Log message to console
 Example log message:
 
 ```text
-createTask called — saving task to database
+"createTask called - saving task to database"
 ```
 
 Now send:
